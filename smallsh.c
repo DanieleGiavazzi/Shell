@@ -46,7 +46,6 @@ void runcommand(char **cline,int where){	/* esegue un comando */
   }
   if (pid == (pid_t) 0) { 	/* processo figlio */
     /* esegue il comando il cui nome e' il primo elemento di cline, passando cline come vettore di argomenti */
-      printf("PID = %d\n", pid); /**debug*/
       execvp(*cline,cline);
       perror(*cline);
       exit(1);
@@ -55,14 +54,17 @@ void runcommand(char **cline,int where){	/* esegue un comando */
   /* la seguente istruzione non tiene conto della possibilita' di comandi in background  (where == BACKGROUND) */
   if(where == BACKGROUND){  /**comando in BACKGROUND*/
     printf("processo BACKGROUND %d\n", pid);
-    printf("processo BACKGROUND %d terminato con status: %d\n", pid, exitstat);
+    if(waitpid(pid, &exitstat, 0 || WNOHANG) != 0){
+      printf("Il processo e' stato interrotto da segnale di terminazione\n");
+    }
+    else{
+      printf("processo BACKGROUND %d terminato con status: %d\n", pid, exitstat);
+    }
   }
   else{
-    ret = wait(&exitstat);
-    if (ret == -1) perror("wait");
-  }
-  if(waitpid(pid, &exitstat, 0 || WNOHANG) == 0){
-    printf("Il processo e' stato interrotto da segnale di terminazione\n");
+    printf("processo FOREGROUND %d\n", pid);
+    ret = waitpid(pid, WIFEXITED);
+    if(ret == -1) perror("wait");
   }
 }
 
