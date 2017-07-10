@@ -63,7 +63,9 @@ void runcommand(char **cline,int where){	/* esegue un comando */
   }
   else{
     printf("processo FOREGROUND %d\n", pid);
-    ret = waitpid(pid, WIFEXITED);
+    ret = waitpid(pid, &exitstat | WIFEXITED, 0);
+    printf("%d\n", ret);
+    if(ret == 0){ printf("Il processo e' stato interrotto da segnale di terminazione\n"); }
     if(ret == -1) perror("wait");
   }
 }
