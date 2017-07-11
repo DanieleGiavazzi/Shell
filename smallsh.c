@@ -57,31 +57,23 @@ void runcommand(char **cline,int where){	/* esegue un comando */
   }
   if (pid == (pid_t) 0) { 	/* processo figlio */
     /* esegue il comando il cui nome e' il primo elemento di cline, passando cline come vettore di argomenti */
-    if(where == BACKGROUND){ /**comando BG*/
       execvp(*cline,cline);
       perror(*cline);
       exit(1);
-    }
-    else{ /**comando FG*/
-
-      sa.sa_handler = SIG_DFL;
-      sigaction(SIGINT,&sa,NULL);
-
-      execvp(*cline,cline);
-      perror(*cline);
-      exit(1);
-    }
   }
   /* processo padre: avendo messo exec e exit non serve "else" */
   /* la seguente istruzione non tiene conto della possibilita' di comandi in background  (where == BACKGROUND) */
   if(where == BACKGROUND){  /**comando in BACKGROUND*/
 
-    sa.sa_handler = SIG_DFL;
-    sigaction(SIGINT,&sa,NULL);
+    /**sa.sa_handler = SIG_DFL;
+    sigaction(SIGINT,&sa,NULL);*/
 
     printf("processo BACKGROUND %d\n", pid);
-    waitpid(pid, &exitstat, WNOHANG);
+    printf("Pid figlio: %d\n", pid); /**debug*/
+    ret = waitpid(pid, &exitstat, WNOHANG);
+    if(ret > 0){
     control_exitstat(exitstat);
+    }
   }
   else{
     printf("processo FOREGROUND %d\n", pid);
@@ -93,8 +85,8 @@ void runcommand(char **cline,int where){	/* esegue un comando */
 
 void main(){
 
-  sa.sa_handler = SIG_IGN;
-  sigaction(SIGINT,&sa,NULL);
+  /**sa.sa_handler = SIG_IGN;
+  sigaction(SIGINT,&sa,NULL);*/
 
   while(userin(prompt) != EOF){
     procline();
