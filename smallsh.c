@@ -3,6 +3,17 @@
 
 char *prompt = "Dare un comando>";
 
+void control_exitstat(int exitstat){		/**controlla il tipo di terminazione*/
+  if(WIFEXITED(exitstat)==1 && WIFSIGNALED(exitstat)!=1){
+      printf("processo terminato con status: %d\n", exitstat);
+  }
+  else{
+      printf("Il processo e' stato interrotto da segnale di terminazione: %d\n",WIFSIGNALED(exitstat));
+  }
+}
+
+struct sigaction sa; /**struttura per la gesione dei segnali*/
+
 int procline(void){ 	/* tratta una riga di input */
   char *arg[MAXARG+1];	/* array di puntatori per runcommand */
   int toktype;  	/* tipo del simbolo nel comando */
@@ -46,32 +57,45 @@ void runcommand(char **cline,int where){	/* esegue un comando */
   }
   if (pid == (pid_t) 0) { 	/* processo figlio */
     /* esegue il comando il cui nome e' il primo elemento di cline, passando cline come vettore di argomenti */
+    if(where == BACKGROUND){ /**comando BG*/
       execvp(*cline,cline);
       perror(*cline);
       exit(1);
+    }
+    else{ /**comando FG*/
+
+      sa.sa_handler = SIG_DFL;
+      sigaction(SIGINT,&sa,NULL);
+
+      execvp(*cline,cline);
+      perror(*cline);
+      exit(1);
+    }
   }
   /* processo padre: avendo messo exec e exit non serve "else" */
   /* la seguente istruzione non tiene conto della possibilita' di comandi in background  (where == BACKGROUND) */
   if(where == BACKGROUND){  /**comando in BACKGROUND*/
+
+    sa.sa_handler = SIG_DFL;
+    sigaction(SIGINT,&sa,NULL);
+
     printf("processo BACKGROUND %d\n", pid);
-    if(waitpid(pid, &exitstat, 0 || WNOHANG) != 0){
-      printf("Il processo e' stato interrotto da segnale di terminazione\n");
-    }
-    else{
-      printf("processo BACKGROUND %d terminato con status: %d\n", pid, exitstat);
-    }
+    waitpid(pid, &exitstat, WNOHANG);
+    control_exitstat(exitstat);
   }
   else{
     printf("processo FOREGROUND %d\n", pid);
-    ret = waitpid(pid, &exitstat | WIFEXITED, 0);
-    printf("%d\n", ret);
-    if(ret == 0){ printf("Il processo e' stato interrotto da segnale di terminazione\n"); }
+    ret = waitpid(pid, &exitstat, 0);
     if(ret == -1) perror("wait");
+    control_exitstat(exitstat);
   }
 }
 
-
 void main(){
+
+  sa.sa_handler = SIG_IGN;
+  sigaction(SIGINT,&sa,NULL);
+
   while(userin(prompt) != EOF){
     procline();
   }
