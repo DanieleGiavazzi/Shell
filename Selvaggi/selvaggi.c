@@ -11,6 +11,7 @@
 sem_t pieno;
 sem_t vuoto;
 pthread_mutex_t mutex; /**garantisce atomicita' quando si modificano le porzioni*/
+int porzioni;
 
 void* Cuoco(void* arg){
   while(1){
@@ -56,8 +57,8 @@ void *Selvaggio(void* arg){
 
 
 void main(){
+  porzioni = 0;
   int retThread, i;
-  int porzioni = 0; /**numero di porzioni disponibili*/
   sem_init(&pieno, 0, 0);
   sem_init(&vuoto, 0, 0);
   pthread_mutex_init(&mutex, NULL);
