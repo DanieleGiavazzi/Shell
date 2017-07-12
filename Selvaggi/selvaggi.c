@@ -14,7 +14,7 @@ pthread_mutex_t mutex; /**garantisce atomicita' quando si modificano le porzioni
 int porzioni;
 
 void* Cuoco(void* arg){
-  int maxP = *(int)arg;
+  int maxP = *((int*)arg);
   while(1){
     sem_wait(&vuoto); /**dorme in attesa di essere svegliato*/
     if(porzioni == 0){ /**se pentola vuota*/
@@ -36,7 +36,7 @@ void* Cuoco(void* arg){
 }
 
 void *Selvaggio(void* arg){
-  int nSelvaggi = *(int)arg;
+  int nSelvaggi = *((int*)arg);
   int i;
   for(i = 0; i < nSelvaggi; i++){ /**per il numero di selvaggi*/
     pthread_mutex_lock(&mutex); /**affamato*/
