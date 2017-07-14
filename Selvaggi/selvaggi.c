@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <semaphore.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <pthread.h>
 #include <unistd.h>
 
@@ -36,6 +37,7 @@ void* Cuoco(void* arg){
 }
 
 void *Selvaggio(void* arg){
+  printf("porzioni = %d\n", porzioni);
   int nSelvaggi = *((int*)arg);
   int i;
   for(i = 0; i < nSelvaggi; i++){ /**per il numero di selvaggi*/
@@ -67,7 +69,7 @@ void main(){
   pthread_mutex_init(&mutex, NULL);
   pthread_t tcuoco;
   pthread_t tselvaggio;
-  porzioni = 0;
+  porzioni = maxP;
   retThread = pthread_create(&tcuoco, NULL, Cuoco, &maxP);
   if(retThread != 0){
     printf("ERRORE creazione cuoco\n");

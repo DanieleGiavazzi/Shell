@@ -5,10 +5,20 @@ char *prompt = "Dare un comando>";
 
 void control_exitstat(int exitstat){		/**controlla il tipo di terminazione*/
   if(WIFEXITED(exitstat)==1 && WIFSIGNALED(exitstat)!=1){
-      printf("processo terminato con status: %d\n", exitstat);
+      printf("processo figlio terminato con status: %d\n", exitstat);
   }
   else{
       printf("Il processo e' stato interrotto da segnale di terminazione: %d\n",WIFSIGNALED(exitstat));
+  }
+}
+
+void exit_bg(pid_t pid){ /**controlla la terminazione di un figlio senza aspettarne la fine*/
+  int ret = 0;
+  int exitstat = 0;
+  ret = waitpid(pid, &exitstat, WNOHANG);
+  if(ret > 0){
+    printf("Processo in BG terminato\n");
+    control_exitstat(exitstat);
   }
 }
 
@@ -69,17 +79,17 @@ void runcommand(char **cline,int where){	/* esegue un comando */
     sigaction(SIGINT,&sa,NULL);*/
 
     printf("processo BACKGROUND %d\n", pid);
-    printf("Pid figlio: %d\n", pid); /**debug*/
-    ret = waitpid(pid, &exitstat, WNOHANG);
-    if(ret > 0){
-    control_exitstat(exitstat);
-    }
+    exit_bg(-1); /**controllo se un qualche processo figlio è terminato*/
+    exit_bg(pid);
   }
   else{
     printf("processo FOREGROUND %d\n", pid);
     ret = waitpid(pid, &exitstat, 0);
     if(ret == -1) perror("wait");
-    control_exitstat(exitstat);
+    if(WIFEXITED(exitstat)==1 && WIFSIGNALED(exitstat)!=1){}
+    else{
+      printf("Il processo e' stato interrotto da segnale di terminazione: %d\n",WIFSIGNALED(exitstat));
+    }
   }
 }
 
@@ -89,6 +99,7 @@ void main(){
   sigaction(SIGINT,&sa,NULL);*/
 
   while(userin(prompt) != EOF){
+    exit_bg(-1); /**controllo se un qualche processo figlio è terminato*/
     procline();
   }
 }
