@@ -11,7 +11,7 @@
 
 sem_t pieno;
 sem_t vuoto;
-pthread_mutex_t mutex; /**garantisce atomicita' quando si modificano le porzioni*/
+pthread_mutex_t mutex; /**garantisce atomicita' quando si modifica porzioni*/
 int porzioni;
 
 void* Cuoco(void* arg){
@@ -37,10 +37,10 @@ void* Cuoco(void* arg){
 }
 
 void *Selvaggio(void* arg){
-  printf("porzioni = %d\n", porzioni);
+  printf("porzioni = %d\n", porzioni); /**debug*/
   int nSelvaggi = *((int*)arg);
   int i;
-  for(i = 0; i < nSelvaggi; i++){ /**per il numero di selvaggi*/
+  for(i = 0; i < NGIRI; i++){ /**per il numero di selvaggi*/
     pthread_mutex_lock(&mutex); /**affamato*/
     /**inizio sezione critica*/
     printf("Un selvaggio ha fame\n");
@@ -51,7 +51,9 @@ void *Selvaggio(void* arg){
       sem_wait(&pieno); /**attendo che prepari*/
     }
     printf("Prendo una porzione\n");
+    printf("Mangia per la %d volta\n", i+1);
     porzioni--; /**si appropria di una porzione*/
+    printf("porzioni = %d\n", porzioni); /**debug*/
     /**fine sezione critica*/
     pthread_mutex_unlock(&mutex);
     /**mangia porzione*/
@@ -77,6 +79,7 @@ void main(){
   }
   for(i = 0; i < S; i++){
     retThread = pthread_create(&tselvaggio, NULL, Selvaggio, &nselvaggi);
+    printf("Selvaggio n %d\n", i);
     if(retThread != 0){
       printf("ERRORE creazione selvaggio\n");
       exit(1);
