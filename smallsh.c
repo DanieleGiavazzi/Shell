@@ -79,7 +79,6 @@ void runcommand(char **cline,int where){	/* esegue un comando */
     sigaction(SIGINT,&sa,NULL);*/
 
     printf("processo BACKGROUND %d\n", pid);
-    exit_bg(-1); /**controllo se un qualche processo figlio è terminato*/
     exit_bg(pid);
   }
   else{
