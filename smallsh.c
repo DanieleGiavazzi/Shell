@@ -1,11 +1,14 @@
 #include "smallsh.h"
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <signal.h>
 
 char *prompt = "Dare un comando>";
 
 void control_exitstat(int exitstat){		/**controlla il tipo di terminazione*/
   if(WIFEXITED(exitstat)==1 && WIFSIGNALED(exitstat)!=1){
-      printf("processo figlio terminato con status: %d\n", exitstat);
+      printf("processo figlio terminato normalmente\n");
   }
   else{
       printf("Il processo e' stato interrotto da segnale di terminazione: %d\n",WIFSIGNALED(exitstat));
@@ -17,7 +20,7 @@ void exit_bg(pid_t pid){ /**controlla la terminazione di un figlio senza aspetta
   int exitstat = 0;
   ret = waitpid(pid, &exitstat, WNOHANG);
   if(ret > 0){
-    printf("Processo in BG terminato\n");
+    printf("Processo in BG %d terminato\n", ret);
     control_exitstat(exitstat);
   }
 }
