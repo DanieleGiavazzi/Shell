@@ -42,7 +42,7 @@ void *Selvaggio(void* arg){
   for(i = 0; i < NGIRI; i++){ /**per il numero di selvaggi*/
     pthread_mutex_lock(&mutex); /**affamato*/
     /**inizio sezione critica*/
-    printf("Il %d selvaggio ha fame\n", iS);
+    printf("Il selvaggio N %d ha fame\n", iS);
     if(porzioni == 0){
       printf("Il pentolone e' vuoto, sveglio il cuoco\n");
       sem_post(&vuoto); /**sveglio il cuoco*/
@@ -50,7 +50,7 @@ void *Selvaggio(void* arg){
       sem_wait(&pieno); /**attendo che prepari*/
     }
     printf("Prendo una porzione\n");
-    printf("Mangia per la %d volta\n", i+1);
+    printf("IL selvaggio N %d mangia per la %d volta\n", iS, i+1);
     porzioni--; /**si appropria di una porzione*/
     printf("porzioni = %d\n", porzioni); /**debug*/
     /**fine sezione critica*/
@@ -74,14 +74,14 @@ void main(){
   retThread = pthread_create(&tcuoco, NULL, Cuoco, &maxP);
   if(retThread != 0){
     printf("ERRORE creazione cuoco\n");
-    exit(1);
+    exit(-1);
   }
   for(i = 0; i < S; i++){
     retThread = pthread_create(&tselvaggio, NULL, Selvaggio, &i);
-    printf("Selvaggio n %d\n", i);
+    printf("SELVAGGIO N %d PENSA --\n", i);
     if(retThread != 0){
       printf("ERRORE creazione selvaggio\n");
-      exit(1);
+      exit(-1);
     }
   }
 }

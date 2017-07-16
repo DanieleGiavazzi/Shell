@@ -5,6 +5,7 @@
 #include <signal.h>
 
 char *prompt = "Dare un comando>";
+struct sigaction sa; /**struttura per la gesione dei segnali*/
 
 void control_exitstat(int exitstat){		/**controlla il tipo di terminazione*/
   if(WIFEXITED(exitstat)==1 && WIFSIGNALED(exitstat)!=1){
@@ -24,8 +25,6 @@ void exit_bg(pid_t pid){ /**controlla la terminazione di un figlio senza aspetta
     control_exitstat(exitstat);
   }
 }
-
-struct sigaction sa; /**struttura per la gesione dei segnali*/
 
 int procline(void){ 	/* tratta una riga di input */
   char *arg[MAXARG+1];	/* array di puntatori per runcommand */
@@ -78,8 +77,10 @@ void runcommand(char **cline,int where){	/* esegue un comando */
   /* la seguente istruzione non tiene conto della possibilita' di comandi in background  (where == BACKGROUND) */
   if(where == BACKGROUND){  /**comando in BACKGROUND*/
 
-    /**sa.sa_handler = SIG_DFL;
-    sigaction(SIGINT,&sa,NULL);*/
+    sa.sa_handler = SIG_DFL;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
 
     printf("processo BACKGROUND %d\n", pid);
     exit_bg(pid);
@@ -90,15 +91,17 @@ void runcommand(char **cline,int where){	/* esegue un comando */
     if(ret == -1) perror("wait");
     if(WIFEXITED(exitstat)==1 && WIFSIGNALED(exitstat)!=1){}
     else{
-      printf("Il processo e' stato interrotto da segnale di terminazione: %d\n",WIFSIGNALED(exitstat));
+        printf("Il processo e' stato interrotto da segnale di terminazione: %d\n",WIFSIGNALED(exitstat));
     }
   }
 }
 
 void main(){
 
-  /**sa.sa_handler = SIG_IGN;
-  sigaction(SIGINT,&sa,NULL);*/
+  sa.sa_handler = SIG_IGN;  /**imposta di ignorare i segnali SIGINT*/
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sigaction(SIGINT, &sa, NULL);
 
   while(userin(prompt) != EOF){
     exit_bg(-1); /**controllo se un qualche processo figlio è terminato*/
