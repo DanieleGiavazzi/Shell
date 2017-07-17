@@ -12,7 +12,16 @@
 sem_t pieno;
 sem_t vuoto;
 pthread_mutex_t mutexS, mutexC; /**garantisce atomicita' quando si modifica porzioni*/
-int porzioni;
+int porzioni, Ssleep;
+
+void sinc_s(pthread_t tselvaggio){
+  int ret;
+  ret = pthread_join(tselvaggio, NULL);
+  if(ret != 0){
+    printf("ERRORE\n");
+    exit(-1);
+  }
+}
 
 void* Cuoco(void* arg){
   int maxP = *((int*)arg);
@@ -31,8 +40,11 @@ void* Cuoco(void* arg){
     }
     if(porzioni == maxP){ /**se pentola piena*/
       /**sveglia chi lo ha svegliato*/
-      printf("Chiamo un selvaggio\n");
-      sem_post(&pieno);
+      printf("Chiamo i selvaggi addormentati\n");
+      while(Ssleep > 0){
+        Ssleep--;
+        sem_post(&pieno);
+      }
     }
   }
 }
@@ -48,7 +60,12 @@ void *Selvaggio(void* arg){
       printf("Il pentolone e' vuoto, sveglio il cuoco\n");
       sem_post(&vuoto); /**sveglio il cuoco*/
       printf("Attendo che il cuoco prepari\n");
+      Ssleep++;
+      pthread_mutex_unlock(&mutexS);
+      printf("Il selvaggio N %d si addormenta\n", iS); /**debug*/
       sem_wait(&pieno); /**attendo che prepari*/
+      printf("Il selvaggio N %d e' stato svegliato\n", iS); /**debug*/
+      pthread_mutex_lock(&mutexS);
     }
     pthread_mutex_lock(&mutexC);
     printf("Prendo una porzione\n");
@@ -74,6 +91,7 @@ void main(){
   pthread_mutex_init(&mutexC, NULL);
   pthread_t tcuoco;
   pthread_t tselvaggio;
+  Ssleep = 0; /**conta i selvaggi addormentati in attesa del cuoco*/
   porzioni = maxP;
   retThread = pthread_create(&tcuoco, NULL, Cuoco, &maxP);
   if(retThread != 0){
@@ -87,5 +105,6 @@ void main(){
       printf("ERRORE creazione selvaggio\n");
       exit(-1);
     }
+    sinc_s(tselvaggio);
   }
 }
