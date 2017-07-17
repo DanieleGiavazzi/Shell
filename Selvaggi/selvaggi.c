@@ -11,7 +11,7 @@
 
 sem_t pieno;
 sem_t vuoto;
-pthread_mutex_t mutex; /**garantisce atomicita' quando si modifica porzioni*/
+pthread_mutex_t mutexS, mutexC; /**garantisce atomicita' quando si modifica porzioni*/
 int porzioni;
 
 void* Cuoco(void* arg){
@@ -21,13 +21,13 @@ void* Cuoco(void* arg){
     sem_wait(&vuoto); /**dorme in attesa di essere svegliato*/
     if(porzioni == 0){ /**se pentola vuota*/
       /**cucina*/
-      pthread_mutex_lock(&mutex);
+      pthread_mutex_lock(&mutexC);
       /**inizio sezione critica*/
       printf("Il cuoco cucina\n");
       porzioni = maxP;
       printf("Il pentolone e' pieno\n");
       /**fine sezione critica*/
-      pthread_mutex_unlock(&mutex);
+      pthread_mutex_unlock(&mutexC);
     }
     if(porzioni == maxP){ /**se pentola piena*/
       /**sveglia chi lo ha svegliato*/
@@ -41,7 +41,7 @@ void *Selvaggio(void* arg){
   int iS = *((int*)arg); /**indice selvaggi*/
   int i;
   for(i = 0; i < NGIRI; i++){ /**per il numero di selvaggi*/
-    pthread_mutex_lock(&mutex); /**affamato*/
+    pthread_mutex_lock(&mutexS); /**affamato*/
     /**inizio sezione critica*/
     printf("Il selvaggio N %d ha fame\n", iS);
     if(porzioni == 0){
@@ -50,12 +50,14 @@ void *Selvaggio(void* arg){
       printf("Attendo che il cuoco prepari\n");
       sem_wait(&pieno); /**attendo che prepari*/
     }
+    pthread_mutex_lock(&mutexC);
     printf("Prendo una porzione\n");
     printf("IL selvaggio N %d mangia per la %d volta\n", iS, i+1);
     porzioni--; /**si appropria di una porzione*/
+    pthread_mutex_unlock(&mutexC);
     printf("porzioni = %d\n", porzioni); /**debug*/
     /**fine sezione critica*/
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&mutexS);
     /**mangia porzione*/
   }
   pthread_exit(NULL);
@@ -68,7 +70,8 @@ void main(){
   int retThread, i;
   sem_init(&pieno, 0, 0);
   sem_init(&vuoto, 0, 0);
-  pthread_mutex_init(&mutex, NULL);
+  pthread_mutex_init(&mutexS, NULL);
+  pthread_mutex_init(&mutexC, NULL);
   pthread_t tcuoco;
   pthread_t tselvaggio;
   porzioni = maxP;
