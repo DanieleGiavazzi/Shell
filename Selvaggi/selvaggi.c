@@ -5,14 +5,10 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#define M 10 /**Quante porzioni contiene il pentolone*/
-#define NGIRI 3 /**quante volte mangia un selvaggio*/
-#define S 10 /**numero di selvaggi*/
-
 sem_t pieno;
 sem_t vuoto;
-pthread_mutex_t mutexS, mutexC; /**garantisce atomicita' quando si modifica porzioni*/
-int porzioni, Ssleep;
+pthread_mutex_t mutexS, mutexC; /**garantiscono atomicita'*/
+int porzioni, Ssleep, ngiri;
 
 void sinc_s(pthread_t tselvaggio){
   int ret;
@@ -26,7 +22,7 @@ void sinc_s(pthread_t tselvaggio){
 void* Cuoco(void* arg){
   int maxP = *((int*)arg);
   while(1){
-    printf("Pentolone pieno, il CUOCO si addormenta\n");
+    printf("Il CUOCO si addormenta\n");
     sem_wait(&vuoto); /**dorme in attesa di essere svegliato*/
     if(porzioni == 0){ /**se pentola vuota*/
       /**cucina*/
@@ -39,7 +35,7 @@ void* Cuoco(void* arg){
       pthread_mutex_unlock(&mutexC);
     }
     if(porzioni == maxP){ /**se pentola piena*/
-      /**sveglia chi lo ha svegliato*/
+      /**sveglia tutti*/
       printf("Chiamo i selvaggi addormentati\n");
       while(Ssleep > 0){
         Ssleep--;
@@ -52,7 +48,7 @@ void* Cuoco(void* arg){
 void *Selvaggio(void* arg){
   int iS = *((int*)arg); /**indice selvaggi*/
   int i;
-  for(i = 0; i < NGIRI; i++){ /**per il numero di selvaggi*/
+  for(i = 0; i < ngiri; i++){ /**per il numero di selvaggi*/
     pthread_mutex_lock(&mutexS); /**affamato*/
     /**inizio sezione critica*/
     printf("Il selvaggio N %d ha fame\n", iS);
@@ -72,18 +68,22 @@ void *Selvaggio(void* arg){
     printf("IL selvaggio N %d mangia per la %d volta\n", iS, i+1);
     porzioni--; /**si appropria di una porzione*/
     pthread_mutex_unlock(&mutexC);
+    /**inizio sezione critica*/
     printf("porzioni = %d\n", porzioni); /**debug*/
     /**fine sezione critica*/
     pthread_mutex_unlock(&mutexS);
-    /**mangia porzione*/
   }
   pthread_exit(NULL);
 }
 
 
-void main(){
-  int maxP = M;
-  int nselvaggi = S;
+void main(int argc, char* argv[]){
+  int maxP, nselvaggi;
+  if (argc!=4){
+    printf("Numero di argomenti non corretto\n");
+    printf("Inserie: numero selvaggi, dimensione pentolone, n di volte in cui un selvaggio ha fame\n");
+    exit(-1);
+  }
   int retThread, i;
   sem_init(&pieno, 0, 0);
   sem_init(&vuoto, 0, 0);
@@ -91,14 +91,17 @@ void main(){
   pthread_mutex_init(&mutexC, NULL);
   pthread_t tcuoco;
   pthread_t tselvaggio;
-  Ssleep = 0; /**conta i selvaggi addormentati in attesa del cuoco*/
+  nselvaggi = atoi(argv[1]);
+  maxP = atoi(argv[2]);
+  ngiri = atoi(argv[3]);
+  Ssleep = 0; /**conta i selvaggi addormentati in attesa del cibo*/
   porzioni = maxP;
   retThread = pthread_create(&tcuoco, NULL, Cuoco, &maxP);
   if(retThread != 0){
     printf("ERRORE creazione cuoco\n");
     exit(-1);
   }
-  for(i = 0; i < S; i++){
+  for(i = 0; i < nselvaggi; i++){
     retThread = pthread_create(&tselvaggio, NULL, Selvaggio, &i);
     printf("SELVAGGIO N %d PENSA --\n", i);
     if(retThread != 0){
