@@ -17,6 +17,7 @@ int porzioni;
 void* Cuoco(void* arg){
   int maxP = *((int*)arg);
   while(1){
+    printf("Pentolone pieno, il CUOCO si addormenta\n");
     sem_wait(&vuoto); /**dorme in attesa di essere svegliato*/
     if(porzioni == 0){ /**se pentola vuota*/
       /**cucina*/
