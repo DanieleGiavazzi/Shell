@@ -37,6 +37,7 @@ void* Cuoco(void* arg){
     if(porzioni == maxP){ /**se pentola piena*/
       /**sveglia tutti*/
       printf("Chiamo i selvaggi addormentati\n");
+      sleep(5);
       while(Ssleep > 0){
         Ssleep--;
         sem_post(&pieno);
@@ -49,6 +50,7 @@ void *Selvaggio(void* arg){
   int iS = *((int*)arg); /**indice selvaggi*/
   int i;
   for(i = 0; i < ngiri; i++){ /**per il numero di selvaggi*/
+    sleep(5);
     pthread_mutex_lock(&mutexS); /**affamato*/
     /**inizio sezione critica*/
     printf("Il selvaggio N %d ha fame\n", iS);
@@ -73,41 +75,42 @@ void *Selvaggio(void* arg){
     /**fine sezione critica*/
     pthread_mutex_unlock(&mutexS);
   }
+  sleep(5);
   pthread_exit(NULL);
 }
 
 
 void main(int argc, char* argv[]){
   int maxP, nselvaggi;
+  int ret, i;
+  pthread_t tcuoco, tselvaggio;
   if (argc!=4){
     printf("Numero di argomenti non corretto\n");
     printf("Inserie: numero selvaggi, dimensione pentolone, n di volte in cui un selvaggio ha fame\n");
     exit(-1);
   }
-  int retThread, i;
   sem_init(&pieno, 0, 0);
   sem_init(&vuoto, 0, 0);
   pthread_mutex_init(&mutexS, NULL);
   pthread_mutex_init(&mutexC, NULL);
-  pthread_t tcuoco;
-  pthread_t tselvaggio;
   nselvaggi = atoi(argv[1]);
   maxP = atoi(argv[2]);
   ngiri = atoi(argv[3]);
   Ssleep = 0; /**conta i selvaggi addormentati in attesa del cibo*/
   porzioni = maxP;
-  retThread = pthread_create(&tcuoco, NULL, Cuoco, &maxP);
-  if(retThread != 0){
+  ret = pthread_create(&tcuoco, NULL, Cuoco, &maxP);
+  if(ret != 0){
     printf("ERRORE creazione cuoco\n");
     exit(-1);
   }
   for(i = 0; i < nselvaggi; i++){
-    retThread = pthread_create(&tselvaggio, NULL, Selvaggio, &i);
+    ret = pthread_create(&tselvaggio, NULL, Selvaggio, &i);
     printf("SELVAGGIO N %d PENSA --\n", i);
-    if(retThread != 0){
+    if(ret != 0){
       printf("ERRORE creazione selvaggio\n");
       exit(-1);
     }
     sinc_s(tselvaggio);
   }
+  printf("Tutti i selvaggi hanno mangiato");
 }
