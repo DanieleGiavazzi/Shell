@@ -34,7 +34,7 @@ void *Selvaggio(void* arg){
   int i;
   for(i = 0; i < ngiri; i++){ /**per il numero di selvaggi*/
     printf("Il selvaggi N %d pensa..\n", iS);
-    sleep(5);
+    sleep(2); /**serve a fare intrecciare i selvaggi*/
     pthread_mutex_lock(&mutexS); /**affamato*/
     /**inizio sezione critica*/
     printf("Il selvaggio N %d ha fame\n", iS);
