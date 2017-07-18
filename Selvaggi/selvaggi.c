@@ -8,7 +8,7 @@
 sem_t pieno;
 sem_t vuoto;
 pthread_mutex_t mutexS, mutexC; /**garantiscono atomicita'*/
-int porzioni, Ssleep, ngiri;
+int porzioni, ngiri;
 
 void* Cuoco(void* arg){
   int maxP = *((int*)arg);
@@ -24,14 +24,7 @@ void* Cuoco(void* arg){
       printf("Il pentolone e' pieno\n");
       /**fine sezione critica*/
       pthread_mutex_unlock(&mutexC);
-    }
-    if(porzioni == maxP){ /**se pentola piena*/
-      /**sveglia tutti*/
-      printf("Chiamo i selvaggi addormentati\n");
-      while(Ssleep > 0){
-        Ssleep--;
-        sem_post(&pieno);
-      }
+      sem_post(&pieno);
     }
   }
 }
@@ -47,12 +40,9 @@ void *Selvaggio(void* arg){
       printf("Il pentolone e' vuoto, sveglio il cuoco\n");
       sem_post(&vuoto); /**sveglio il cuoco*/
       printf("Attendo che il cuoco prepari\n");
-      Ssleep++;
-      pthread_mutex_unlock(&mutexS);
       printf("Il selvaggio N %d si addormenta\n", iS); /**debug*/
       sem_wait(&pieno); /**attendo che prepari*/
-      printf("Il selvaggio N %d e' stato svegliato\n", iS); /**debug*/
-      pthread_mutex_lock(&mutexS);
+      printf("Il selvaggio N %d e' stato svegliato\n", iS); /**debug*/;
     }
     pthread_mutex_lock(&mutexC);
     printf("Prendo una porzione\n");
@@ -85,7 +75,6 @@ void main(int argc, char* argv[]){
   ngiri = atoi(argv[3]);
   pthread_t tcuoco;
   pthread_t tselvaggio[nselvaggi - 1];
-  Ssleep = 0; /**conta i selvaggi addormentati in attesa del cibo*/
   porzioni = maxP;
   printf("Creo il cuoco\n");/**debug*/
   ret = pthread_create(&tcuoco, NULL, Cuoco, &maxP);
