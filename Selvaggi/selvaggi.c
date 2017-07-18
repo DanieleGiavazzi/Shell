@@ -33,6 +33,8 @@ void *Selvaggio(void* arg){
   int iS = *((int*)arg); /**indice selvaggi*/
   int i;
   for(i = 0; i < ngiri; i++){ /**per il numero di selvaggi*/
+    printf("Il selvaggi N %d pensa..\n", iS);
+    sleep(5);
     pthread_mutex_lock(&mutexS); /**affamato*/
     /**inizio sezione critica*/
     printf("Il selvaggio N %d ha fame\n", iS);
@@ -76,16 +78,14 @@ void main(int argc, char* argv[]){
   pthread_t tcuoco;
   pthread_t tselvaggio[nselvaggi - 1];
   porzioni = maxP;
-  printf("Creo il cuoco\n");/**debug*/
   ret = pthread_create(&tcuoco, NULL, Cuoco, &maxP);
   if(ret != 0){
     printf("ERRORE creazione cuoco\n");
     exit(-1);
   }
-  printf("Inizio a creare i selvaggi\n");/**debug*/
   for(i = 0; i < nselvaggi; i++){
     ret = pthread_create(&tselvaggio[i], NULL, Selvaggio, &i);
-    printf("SELVAGGIO N %d PENSA --\n", i);
+    printf("Arriva il selvaggio N %d --\n", i);
     if(ret != 0){
       printf("ERRORE creazione selvaggio\n");
       exit(-1);
